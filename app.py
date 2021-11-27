@@ -43,7 +43,7 @@ def register():
         }
         mongo.db.users.insert_one(register)
 
-        #put the new user into 'session' cookie
+        # put the new user into 'session' cookie
         session["user"] = request.form.get("username").lower()
         flash("Registration Successful!")
         return redirect(url_for("profile", username=session["user"]))
@@ -53,25 +53,26 @@ def register():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        #check if username exists in db
+        # check if username exists in db
         existing_user = mongo.db.users.find_one(
             {"username": request.form.get("username").lower()})
         if existing_user:
             # ensure hashed password matches what user has input
             if check_password_hash(
-                existing_user["password"], request.form.get("password")):
-                    session["user"] = request.form.get("username").lower()
-                    flash("Welcome, {}".format(
-                        request.form.get("username")))
-                    return redirect(url_for(
-                        "profile", username=session["user"]))
+                                   existing_user["password"],
+                                   request.form.get("password")):
+                session["user"] = request.form.get("username").lower()
+                flash("Welcome, {}".format(
+                                           request.form.get("username")))
+                return redirect(url_for(
+                                        "profile", username=session["user"]))
             else:
                 # invalid password match
                 flash("Incorrect Username and/or Password")
                 return redirect(url_for("login"))
 
         else:
-            #username doesn't exist
+            # username doesn't exist
             flash("Incorrect Username and/or Password")
             return redirect(url_for("login"))
         
@@ -106,7 +107,6 @@ def add_task():
             "category_name": request.form.get("category_name"),
             "task_name": request.form.get("task_name"),
             "task_description": request.form.get("task_description"),
-            "task_name": request.form.get("task_name"),
             "is_urgent": is_urgent,
             "due_date": request.form.get("due_date"),
             "created_by": session["user"]
@@ -117,6 +117,13 @@ def add_task():
 
     categories = mongo.db.categories.find().sort("category_name", 1)
     return render_template("add_task.html", categories=categories)
+
+
+@app.route("/edit_task/<task_id>", methods=["GET", "POST"])
+def edit_task(task_id):
+    task = mongo.db.tasks.find_one({"_id": ObjectId(task_id)})
+    categories = mongo.db.categories.find().sort("category_name", 1)
+    return render_template("edit_task.html", task=task, categories=categories)
 
 
 if __name__ == "__main__":
